@@ -8,11 +8,12 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
 
-var version = 1.0
+var version = 2.0
 var salesEndpoint = "https://reportingitc-reporter.apple.com/reportservice/sales/v1"
 var financeEndpoint = "https://reportingitc-reporter.apple.com/reportservice/finance/v1"
 
@@ -32,12 +33,18 @@ type Config struct {
 // Request to Reporter endpoints
 type Request struct {
 	UserID     string `json:"userid"`
+	Account    string `json:"account"`
 	Password   string `json:"password"`
 	Version    string `json:"version"`
 	Mode       string `json:"mode"`
 	SalesURL   string `json:"salesurl"`
 	FinanceURL string `json:"financeurl"`
 	QueryInput string `json:"queryInput"`
+}
+
+// SetAccount sets account as a query escape string
+func (r *Request) SetAccount(account int) {
+	r.Account = url.QueryEscape(strconv.Itoa(account))
 }
 
 // NewClient yield a new Client instance
@@ -108,7 +115,8 @@ func (c Client) GetFinanceVendorsAndRegions(account int) ([]byte, error) {
 		return nil, errors.New("Wrong account number")
 	}
 	req := c.getBaseRequest()
-	req.QueryInput = fmt.Sprintf("%%5Bp%%3DReporter.properties%%2C+a%%3D%d%%2C+Finance.getVendorsAndRegions%%5D", account)
+	req.SetAccount(account)
+	req.QueryInput = fmt.Sprintf("%%5Bp%%3DReporter.properties%%2C+m%%3D%s%%2C+Finance.getVendorsAndRegions%%5D", c.cfg.Mode)
 	return c.send(financeEndpoint, req)
 }
 
@@ -119,8 +127,9 @@ func (c Client) GetSalesReport(account, vendor int, reportType, reportSubType, d
 		return nil, err
 	}
 	req := c.getBaseRequest()
-	qI := "%%5Bp%%3DReporter.properties%%2C+a%%3D%d%%2C+Sales.getReport%%2C+%d%%2C%s%%2C%s%%2C%s%%2C%s%%5D"
-	req.QueryInput = fmt.Sprintf(qI, account, vendor, reportType, reportSubType, dateType, date)
+	req.SetAccount(account)
+	qI := "%%5Bp%%3DReporter.properties%%2C+m%%3D%s%%2C+Sales.getReport%%2C+%d%%2C%s%%2C%s%%2C%s%%2C%s%%5D"
+	req.QueryInput = fmt.Sprintf(qI, c.cfg.Mode, vendor, reportType, reportSubType, dateType, date)
 	return c.send(salesEndpoint, req)
 }
 
@@ -131,8 +140,9 @@ func (c Client) GetFinanceReport(account, vendor int, regionCode, reportType str
 		return nil, err
 	}
 	req := c.getBaseRequest()
-	qI := "%%5Bp%%3DReporter.properties%%2C+a%%3D%d%%2C+Finance.getReport%%2C+%d%%2C%s%%2C%s%%2C%d%%2C%d%%5D"
-	req.QueryInput = fmt.Sprintf(qI, account, vendor, regionCode, reportType, fiscalYear, fiscalPeriod)
+	req.SetAccount(account)
+	qI := "%%5Bp%%3DReporter.properties%%2C+m%%3D%s%%2C+Finance.getReport%%2C+%d%%2C%s%%2C%s%%2C%d%%2C%d%%5D"
+	req.QueryInput = fmt.Sprintf(qI, c.cfg.Mode, vendor, regionCode, reportType, fiscalYear, fiscalPeriod)
 	return c.send(financeEndpoint, req)
 }
 
@@ -150,7 +160,7 @@ func (c Client) send(endpoint string, r Request) ([]byte, error) {
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Accept", "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2")
-	req.Header.Add("User-Agent", "Java/1.8.0_91")
+	req.Header.Add("User-Agent", "Java/1.8.0_112")
 	req.Header.Add("Connection", "keep-alive")
 
 	res, err := c.httpCli.Do(req)
