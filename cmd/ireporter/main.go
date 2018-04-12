@@ -28,9 +28,8 @@ For more details, see Reporter guide in the Resources and Help section on iTunes
 )
 
 var (
-	user = flag.String("userId", "", "Your Apple ID for iTunes Connect.")
-	pwd  = flag.String("password", "", "Your Apple ID’s password.")
-	mode = flag.String("mode", "Normal", `Reporter has two modes of operation: Normal and Robot.
+	accessToken = flag.String("accessToken", "", "Your iTunes Connect Reports Access Token")
+	mode        = flag.String("mode", "Normal", `Reporter has two modes of operation: Normal and Robot.
 Normal mode is intended for an actual user that executes ad-hoc commands. Messages are displayed in easily readable text.
 Robot mode is intended for an automated script that’s used regularly. Messages in robot mode are displayed in XML for easy parsing.`)
 
@@ -55,9 +54,8 @@ func main() {
 	flag.Parse()
 
 	cfg := reporter.Config{
-		UserID:   *user,
-		Password: *pwd,
-		Mode:     *mode,
+		AccessToken: *accessToken,
+		Mode:        *mode,
 	}
 
 	cli, err := reporter.NewClient(cfg)

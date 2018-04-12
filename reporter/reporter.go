@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-var version = 2.0
+var version = 2.1
 var salesEndpoint = "https://reportingitc-reporter.apple.com/reportservice/sales/v1"
 var financeEndpoint = "https://reportingitc-reporter.apple.com/reportservice/finance/v1"
 
@@ -25,21 +25,19 @@ type Client struct {
 
 // Config base properties
 type Config struct {
-	UserID   string
-	Password string
-	Mode     string
+	AccessToken string
+	Mode        string
 }
 
 // Request to Reporter endpoints
 type Request struct {
-	UserID     string `json:"userid"`
-	Account    string `json:"account"`
-	Password   string `json:"password"`
-	Version    string `json:"version"`
-	Mode       string `json:"mode"`
-	SalesURL   string `json:"salesurl"`
-	FinanceURL string `json:"financeurl"`
-	QueryInput string `json:"queryInput"`
+	AccessToken string `json:"accesstoken"`
+	Account     string `json:"account"`
+	Version     string `json:"version"`
+	Mode        string `json:"mode"`
+	SalesURL    string `json:"salesurl"`
+	FinanceURL  string `json:"financeurl"`
+	QueryInput  string `json:"queryInput"`
 }
 
 // SetAccount sets account as a query escape string
@@ -181,12 +179,11 @@ func (c Client) send(endpoint string, r Request) ([]byte, error) {
 
 func (c Client) getBaseRequest() Request {
 	return Request{
-		UserID:     url.QueryEscape(c.cfg.UserID),
-		Password:   url.QueryEscape(c.cfg.Password),
-		Version:    url.QueryEscape(fmt.Sprintf("%.1f", version)),
-		Mode:       url.QueryEscape(c.cfg.Mode),
-		SalesURL:   url.QueryEscape(salesEndpoint),
-		FinanceURL: url.QueryEscape(financeEndpoint),
+		AccessToken: url.QueryEscape(c.cfg.AccessToken),
+		Version:     url.QueryEscape(fmt.Sprintf("%.1f", version)),
+		Mode:        url.QueryEscape(c.cfg.Mode),
+		SalesURL:    url.QueryEscape(salesEndpoint),
+		FinanceURL:  url.QueryEscape(financeEndpoint),
 	}
 }
 
@@ -194,11 +191,8 @@ func checkConfig(cfg Config) error {
 	if cfg.Mode != "Normal" && cfg.Mode != "Robot.xml" {
 		return errors.New("Undefined mode. Use available modes: Normal or Robot.xml")
 	}
-	if cfg.UserID == "" {
-		return errors.New("UserID not set")
-	}
-	if cfg.Password == "" {
-		return errors.New("Password not set")
+	if cfg.AccessToken == "" {
+		return errors.New("AccessToken not set")
 	}
 	return nil
 }
